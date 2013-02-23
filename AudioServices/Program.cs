@@ -43,10 +43,6 @@ namespace Test
         {
             Color.WriteLineColor("          Запуск программы...", "Green");
             
-            DownloadMusic();
-
-            GeneratePlayList();
-            
             GetDir();
 
             GetProcName();
@@ -97,6 +93,8 @@ namespace Test
 
         static void StartPlayer()
         {
+            DownloadMusic();
+
             GeneratePlayList();
 
             Process.Start(MusicDir + "\\default.m3u");
@@ -285,7 +283,7 @@ namespace Test
             {
                 if (file.Length > 1200976)
                 {
-                    Console.WriteLine(file.Name + " " + file.Length);
+                    Console.WriteLine(file.Name);
 
                     try { webClient.DownloadFile(new Uri(RMusicDir + file.Name), MusicDir + "\\" + file.Name); }
                     catch { }
