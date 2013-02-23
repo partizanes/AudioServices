@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AudioServices
+namespace Test
 {
     static class TimeSpanExtensions
     {
