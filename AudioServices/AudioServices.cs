@@ -134,7 +134,7 @@ namespace AudioServices
             }
             catch (Win32Exception)
             {
-                Console.WriteLine("The process is terminating or could not be terminated.");
+                Console.WriteLine("Процесс завершен.");
             }
 
             catch (InvalidOperationException)
