@@ -81,12 +81,12 @@ namespace Test
 
             if (AimpProcess.Length > 0)
             {
-                Color.WriteLineColor("          Плеер запущен...", "Yellow");
+                Color.WriteLineColor("          Плеер работает...", "Yellow");
                 return true;
             }
             else
             {
-                Color.WriteLineColor("          Плеер не запущен...", "Red");
+                Color.WriteLineColor("          Плеер не работает...", "Red");
                 return false;
             }
         }
@@ -145,6 +145,9 @@ namespace Test
             {
                 Console.WriteLine("{0} Exception caught.", e);
             }
+
+            //wait to process kill order to check
+            Thread.Sleep(300);
         }
 
         static void GeneratePlayList()
