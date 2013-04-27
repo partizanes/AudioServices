@@ -16,13 +16,13 @@ namespace Test
     {
         public static DirectoryInfo MusicDir = new DirectoryInfo("F:\\music");
         public static string ProcName = "AIMP3";
-        public static string RemoteMusicDir = "\\192.168.1.11\\music\\";
+        public static string RemoteMusicDir = "//192.168.1.11//music//";
 
         static void GetDir()
         {
             if (Config.GetParametr("MusicDir") == "")
             {
-                Color.WriteLineColor("          Использую папку по умолчанию 'F:\\music' ","Yellow");
+                Color.WriteLineColor("          Использую папку по умолчанию 'F:\\music' ",ConsoleColor.Yellow);
                 MusicDir = new DirectoryInfo("F:\\music");
             }
             else
@@ -32,7 +32,7 @@ namespace Test
         {
             if (Config.GetParametr("ProcName") == "")
             {
-                Color.WriteLineColor("          использую процесс по умолчанию AIMP3","Yellow");
+                Color.WriteLineColor("          использую процесс по умолчанию AIMP3",ConsoleColor.Yellow);
                 ProcName = "AIMP3";
             }
             else
@@ -41,7 +41,7 @@ namespace Test
 
         static void Main(string[] args)
         {
-            Color.WriteLineColor("          Запуск программы...", "Green");
+            Color.WriteLineColor("          Запуск программы...", ConsoleColor.Green);
             
             GetDir();
 
@@ -55,7 +55,7 @@ namespace Test
 
         static void prg()
         {
-            Color.WriteLineColor("          Запуск проверки...", "Green");
+            Color.WriteLineColor("          Запуск проверки...", ConsoleColor.Green);
 
             if (IsWorkTime())
             {
@@ -81,12 +81,12 @@ namespace Test
 
             if (AimpProcess.Length > 0)
             {
-                Color.WriteLineColor("          Плеер работает...", "Yellow");
+                Color.WriteLineColor("          Плеер работает...", ConsoleColor.Yellow);
                 return true;
             }
             else
             {
-                Color.WriteLineColor("          Плеер не работает...", "Red");
+                Color.WriteLineColor("          Плеер не работает...", ConsoleColor.Red);
                 return false;
             }
         }
@@ -104,12 +104,12 @@ namespace Test
         {
             if (!DateTime.Now.TimeOfDay.IsBetween(new TimeSpan(23, 0, 0), new TimeSpan(7, 0, 0)))
             {
-                Color.WriteLineColor("          Рабочее время магазина.", "Yellow");
+                Color.WriteLineColor("          Рабочее время магазина.", ConsoleColor.Yellow);
                 return true;
             }
             else
             {
-                Color.WriteLineColor("          Нерабочее время магазина.", "Cyan");
+                Color.WriteLineColor("          Нерабочее время магазина.", ConsoleColor.Cyan);
                 return false;
             }    
         }
@@ -128,12 +128,12 @@ namespace Test
                 {
                     AimpProcess[i].Kill();
                     i++;
-                    Color.WriteLineColor("          Всего завершенных процессов : " + i.ToString(),"Red");
+                    Color.WriteLineColor("          Всего завершенных процессов : " + i.ToString(),ConsoleColor.Red);
                 }
             }
             catch (Win32Exception)
             {
-                Color.WriteLineColor("          Ок...", "Yellow");
+                Color.WriteLineColor("          Ок...", ConsoleColor.Yellow);
             }
 
             catch (InvalidOperationException)
@@ -156,7 +156,7 @@ namespace Test
 
             try
             {
-                Color.WriteLineColor("          Генерирую Плейлист...", "Yellow");
+                Color.WriteLineColor("          Генерирую Плейлист...", ConsoleColor.Yellow);
 
                 StreamWriter sw = new StreamWriter(MusicDir + "\\default.m3u", false, System.Text.Encoding.UTF8);
                 sw.WriteLine("#EXTM3U");
@@ -174,7 +174,7 @@ namespace Test
 
                 sw.Close();
 
-                Color.WriteLineColor("          Плейлист сгенерирован...", "Green");
+                Color.WriteLineColor("          Плейлист сгенерирован...", ConsoleColor.Green);
 
             }
             catch (System.Exception ex)
@@ -204,14 +204,14 @@ namespace Test
                     TimeEnd = TimeEnd.AddDays(1);
                 }
 
-                Color.WriteLineColor("          Выполняю действие " + TimeEnd + "-" + TimeNow, "DarkBlue"); 
+                Color.WriteLineColor("          Выполняю действие " + TimeEnd + "-" + TimeNow, ConsoleColor.DarkBlue); 
 
                 diff = TimeEnd - TimeNow;
             }
 
             Thread thd = new Thread(delegate()
             {
-                Color.WriteLineColor("          Запускаю поток контролера","Green");
+                Color.WriteLineColor("          Запускаю поток контролера",ConsoleColor.Green);
                 WaitTime(diff,day);
             });
             thd.Name = "Поток контроллер";
@@ -262,12 +262,12 @@ namespace Test
 
             if (day)
             {
-                Color.WriteLineColor("          Завершаю процесс плеера!","Red");
+                Color.WriteLineColor("          Завершаю процесс плеера!",ConsoleColor.Red);
                 KillProc();
             }
             else
             {
-                Color.WriteLineColor("          Запускаю процесс плеера!","Green");
+                Color.WriteLineColor("          Запускаю процесс плеера!",ConsoleColor.Green);
                 StartPlayer();
             }
 
@@ -276,22 +276,29 @@ namespace Test
 
         static void DownloadMusic()
         {
-            DirectoryInfo RMusicDir = new DirectoryInfo("//192.168.1.11//music//");
-
-            FileInfo[] MusicMass = RMusicDir.GetFiles("*.mp3");
-
-            var webClient = new WebClient();
-
-            foreach (FileInfo file in MusicMass)
+            try
             {
-                if (file.Length > 1200976)
+                DirectoryInfo RMusicDir = new DirectoryInfo(RemoteMusicDir);
+
+                FileInfo[] MusicMass = RMusicDir.GetFiles("*.mp3");
+
+                var webClient = new WebClient();
+
+                foreach (FileInfo file in MusicMass)
                 {
-                    Console.WriteLine(file.Name);
+                    if (file.Length > 1200976)
+                    {
+                        Console.WriteLine(file.Name);
 
-                    try { webClient.DownloadFile(new Uri(RMusicDir + file.Name), MusicDir + "\\" + file.Name); }
-                    catch { }
+                        webClient.DownloadFile(new Uri(RMusicDir + file.Name), MusicDir + "\\" + file.Name);
+                    }
+
                 }
-
+            }
+            catch (System.Exception ex)
+            {
+                Color.WriteLineColor(ex.Message, ConsoleColor.Red);
+                Log.ExcWrite(ex.Message);
             }
         }
             
