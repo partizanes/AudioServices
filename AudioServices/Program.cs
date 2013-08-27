@@ -14,29 +14,82 @@ namespace Test
 {
     class Program
     {
-        public static DirectoryInfo MusicDir = new DirectoryInfo("F:\\music");
-        public static string ProcName = "AIMP3";
-        public static string RemoteMusicDir = "//192.168.1.11//music//";
+        private static DirectoryInfo MusicDir = new DirectoryInfo("F:\\music");
+        private static DirectoryInfo AdDir = new DirectoryInfo("F:\\ad");
+        private static string ProcName = "AIMP3";
+        private static string RemoteMusicDir = "//192.168.1.11//music//";
+        private static string RemoteAdDir = "//192.168.1.11//ad//";
+        private static bool RemoveDuplicates = false;
 
-        static void GetDir()
+        private static void GetDir()
         {
-            if (Config.GetParametr("MusicDir") == "")
+            string LMusicDir = Config.GetParametr("MusicDir");
+            string LAdDir = Config.GetParametr("AdDir");
+            string LRemoteMusicDir = Config.GetParametr("RemoteMusicDir");
+            string LRemoteAdDir = Config.GetParametr("RemoteAdDir");
+
+
+            if (LAdDir.Length > 0)
+                AdDir = new DirectoryInfo(LAdDir);
+            else
             {
-                Color.WriteLineColor("          Использую папку по умолчанию 'F:\\music' ",ConsoleColor.Yellow);
+                Color.WriteLineColor("          В конфигурационном файле не заданы параметры папки с рекламой.  ", ConsoleColor.Yellow);
+                Color.WriteLineColor("          Использую папку по умолчанию 'F:\\ad' ", ConsoleColor.Yellow);
+                AdDir = new DirectoryInfo("F:\\ad");
+            }
+
+
+            if (LMusicDir.Length > 0)
+                MusicDir = new DirectoryInfo(LMusicDir);
+            else
+            {
+                Color.WriteLineColor("          В конфигурационном файле не заданы параметры папки с музыкой.  ", ConsoleColor.Yellow);
+                Color.WriteLineColor("          Использую папку по умолчанию 'F:\\music' ", ConsoleColor.Yellow);
                 MusicDir = new DirectoryInfo("F:\\music");
             }
+
+            if (LRemoteAdDir.Length > 0)
+                RemoteAdDir = LRemoteAdDir;
             else
-                MusicDir = new DirectoryInfo(Config.GetParametr("MusicDir"));
-        }
-        static void GetProcName()
-        {
-            if (Config.GetParametr("ProcName") == "")
             {
-                Color.WriteLineColor("          использую процесс по умолчанию AIMP3",ConsoleColor.Yellow);
+                Color.WriteLineColor("          В конфигурационном файле не заданы параметры удаленной папки с рекламой.  ", ConsoleColor.Yellow);
+                Color.WriteLineColor("          Использую папку по умолчанию '//192.168.1.11//ad//' ", ConsoleColor.Yellow);
+                RemoteAdDir = "//192.168.1.11//ad//";
+            }
+
+            if (LRemoteMusicDir.Length > 0)
+                RemoteMusicDir = LRemoteMusicDir;
+            else
+            {
+                Color.WriteLineColor("          В конфигурационном файле не заданы параметры удаленной папки с музыкой.  ", ConsoleColor.Yellow);
+                Color.WriteLineColor("          Использую папку по умолчанию '//192.168.1.11//music//' ", ConsoleColor.Yellow);
+                RemoteMusicDir = "//192.168.1.11//music//";
+            }
+
+
+        }
+        private static void GetProcName()
+        {
+            string LprocName = Config.GetParametr("ProcName");
+
+            if (LprocName.Length > 0)
+                ProcName = LprocName;
+            else
+            {
+                Color.WriteLineColor("          В конфигурационном файле не заданы параметры плеера.", ConsoleColor.Yellow);
+                Color.WriteLineColor("          Использую процесс по умолчанию AIMP3", ConsoleColor.Yellow);
                 ProcName = "AIMP3";
             }
-            else
-                ProcName = Config.GetParametr("ProcName");
+        }
+
+        private static void GetRemoveDuplicatesStatus()
+        {
+            string LremoveDuplicates = Config.GetParametr("ProcName");
+
+            if (LremoveDuplicates.Length > 0)
+                bool.TryParse(LremoveDuplicates, out RemoveDuplicates);
+
+            Color.WriteLineColor("          Параметр удаленния дубликатов равен : " + RemoveDuplicates.ToString(), ConsoleColor.Yellow);
         }
 
         static void Main(string[] args)
@@ -47,13 +100,15 @@ namespace Test
 
             GetProcName();
 
+            GetRemoveDuplicatesStatus();
+
             prg();
 
             while (true)
                 Console.ReadKey();
         }
 
-        static void prg()
+        private static void prg()
         {
             Color.WriteLineColor("          Запуск проверки...", ConsoleColor.Green);
 
@@ -73,7 +128,7 @@ namespace Test
             }
         }
 
-        static bool IsPlayerStarted()
+        private static bool IsPlayerStarted()
         {
             Process[] AimpProcess;
 
@@ -91,16 +146,20 @@ namespace Test
             }
         }
 
-        static void StartPlayer()
+        private static void StartPlayer()
         {
+            CleanUp();
+
             DownloadMusic();
+
+            DownloadAd();
 
             GeneratePlayList();
 
             Process.Start(MusicDir + "\\default.m3u");
         }
 
-        static bool IsWorkTime()
+        private static bool IsWorkTime()
         {
             if (!DateTime.Now.TimeOfDay.IsBetween(new TimeSpan(23, 0, 0), new TimeSpan(7, 0, 0)))
             {
@@ -114,7 +173,7 @@ namespace Test
             }    
         }
 
-        static void KillProc()
+        private static void KillProc()
         {
             Process[] AimpProcess;
 
@@ -150,9 +209,10 @@ namespace Test
             Thread.Sleep(300);
         }
 
-        static void GeneratePlayList()
+        private static void GeneratePlayList()
         {
             FileInfo[] MusicMass = MusicDir.GetFiles("*.mp3");
+            FileInfo[] AdMass = AdDir.GetFiles("*.mp3");
 
             try
             {
@@ -169,6 +229,11 @@ namespace Test
                         Console.WriteLine(MusicDir + "\\" + file.Name);
                         sw.WriteLine(MusicDir + "\\" + file.Name);
                         sw.WriteLine("#EXTINF:3618," + file.Name.Replace(".mp3", ""));
+
+                        //AD
+                        Console.WriteLine(AdMass[new Random().Next(0, AdMass.Length)].Name);
+                        sw.WriteLine(MusicDir + "\\" + AdMass[new Random().Next(0, AdMass.Length)].Name);
+                        sw.WriteLine("#EXTINF:3618," + AdMass[new Random().Next(0, AdMass.Length)].Name.Replace(".mp3", ""));
                     }
                 }
 
@@ -179,11 +244,12 @@ namespace Test
             }
             catch (System.Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine("[GeneratePlayList]" + ex.Message);
+                Log.ExcWrite("[GeneratePlayList]" + ex.Message);
             }
         }
 
-        static void CheckTime(bool day)
+        private static void CheckTime(bool day)
         {
             TimeSpan diff = new TimeSpan();
 
@@ -218,7 +284,7 @@ namespace Test
             thd.Start();
         }
 
-        static void WaitTime(TimeSpan diff, bool day)
+        private static void WaitTime(TimeSpan diff, bool day)
         {
             int i = Convert.ToInt32(diff.TotalSeconds);
             string text;
@@ -274,7 +340,7 @@ namespace Test
             prg();
         }
 
-        static void DownloadMusic()
+        private static void DownloadMusic()
         {
             try
             {
@@ -299,6 +365,99 @@ namespace Test
             {
                 Color.WriteLineColor(ex.Message, ConsoleColor.Red);
                 Log.ExcWrite(ex.Message);
+            }
+        }
+
+        private static void DownloadAd()
+        {
+            try
+            {
+                DirectoryInfo remADdir = new DirectoryInfo(RemoteAdDir);
+
+                FileInfo[] AdMass = remADdir.GetFiles("*.mp3");
+
+                var webClient = new WebClient();
+
+                foreach (FileInfo file in AdMass)
+                {
+                    Console.WriteLine(file.Name);
+
+                    webClient.DownloadFile(new Uri(remADdir + file.Name), AdDir + "\\" + file.Name);
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Color.WriteLineColor(ex.Message, ConsoleColor.Red);
+                Log.ExcWrite("[DownloadAd]" + ex.Message);
+            }
+        }
+
+        private static void CleanUp()
+        {
+            try
+            {
+                DirectoryInfo RMusicDir = new DirectoryInfo(RemoteMusicDir);
+
+                FileInfo[] MusicMass = RMusicDir.GetFiles("*.mp3");
+
+                foreach (FileInfo file in MusicMass)
+                {
+
+                    Console.WriteLine("Произвожу поиск и удаление рекламы...");
+
+                    if (file.Length < 1200976)
+                    {
+                        //Console.WriteLine(RMusicDir + file.Name);
+                        //File.Delete(RMusicDir + file.Name);
+                        Log.Write(RMusicDir + file.Name, "[DEL_AD]", "del_ad");
+                    }
+
+                    Console.WriteLine("Произвожу поиск и удаление дубликатов алгоритм №1...");
+
+                    if (file.Name.Contains(" (2).mp3") ||
+                        file.Name.Contains(" (3).mp3") ||
+                        file.Name.Contains(" (4).mp3") ||
+                        file.Name.Contains(" (5).mp3") ||
+                        file.Name.Contains(" (6).mp3") ||
+                        file.Name.Contains(" (7).mp3") ||
+                        file.Name.Contains(" (8).mp3") ||
+                        file.Name.Contains(" (9).mp3") ||
+                        file.Name.Contains(" (10).mp3")) {
+
+                        //File.Delete(RMusicDir + file.Name);
+                        Log.Write(RMusicDir + file.Name, "[DEL_ALG1]", "del1");
+                    }
+
+                    Console.WriteLine("Произвожу поиск и удаление дубликатов алгоритм №2,3...");
+
+                    foreach (FileInfo files in MusicMass)
+                    {
+                        if (files.Length == file.Length && files.Name != file.Name)
+                        {
+                            Console.WriteLine(RMusicDir + files.Name);
+                            //File.Delete(RMusicDir + files.Name);
+                            Log.Write(RMusicDir + files.Name, "[DEL_ALG2]", "del2");
+                        }
+
+                        if (file.Name.Length != files.Name.Length && file.Name.Substring(0, file.Name.Length) == file.Name.Substring(0, file.Name.Length - 3))
+                        {
+                            Console.WriteLine(RMusicDir + files.Name);
+                            //File.Delete(RMusicDir + files.Name);
+                            Log.Write(RMusicDir + files.Name, "[DEL_ALG3]", "del3");
+                        }
+
+                    }
+
+                    Console.WriteLine("Очистка завершена...");
+
+                }
+
+
+            }
+            catch (System.Exception ex)
+            {
+                Color.WriteLineColor("[CleanUp]" + ex.Message, ConsoleColor.Red);
+                Log.ExcWrite("[CleanUp]" + ex.Message);
             }
         }
             
