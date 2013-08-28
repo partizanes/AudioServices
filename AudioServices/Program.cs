@@ -84,7 +84,7 @@ namespace Test
 
         private static void GetRemoveDuplicatesStatus()
         {
-            string LremoveDuplicates = Config.GetParametr("ProcName");
+            string LremoveDuplicates = Config.GetParametr("RemoveDuplicates");
 
             if (LremoveDuplicates.Length > 0)
                 bool.TryParse(LremoveDuplicates, out RemoveDuplicates);
@@ -230,10 +230,15 @@ namespace Test
                         sw.WriteLine(MusicDir + "\\" + file.Name);
                         sw.WriteLine("#EXTINF:3618," + file.Name.Replace(".mp3", ""));
 
-                        //AD
-                        Console.WriteLine(AdMass[new Random().Next(0, AdMass.Length)].Name);
-                        sw.WriteLine(MusicDir + "\\" + AdMass[new Random().Next(0, AdMass.Length)].Name);
-                        sw.WriteLine("#EXTINF:3618," + AdMass[new Random().Next(0, AdMass.Length)].Name.Replace(".mp3", ""));
+                        //AD change after song
+                        if (new Random().Next(0, 500) + new Random().Next(0, 500) < 500)
+                            continue;
+
+                        int roll = RandomChange(AdMass.Length);
+
+                        sw.WriteLine(AdDir + "\\" + AdMass[roll].Name);
+                        sw.WriteLine("#EXTINF:3618," + AdMass[roll].Name.Replace(".mp3", ""));
+
                     }
                 }
 
@@ -247,6 +252,12 @@ namespace Test
                 Console.WriteLine("[GeneratePlayList]" + ex.Message);
                 Log.ExcWrite("[GeneratePlayList]" + ex.Message);
             }
+        }
+
+        private static int RandomChange(int i)
+        {
+            i = new Random().Next(0, i * 100);
+            return (i / 100);
         }
 
         private static void CheckTime(bool day)
@@ -354,7 +365,10 @@ namespace Test
                 {
                     if (file.Length > 1200976)
                     {
-                        Console.WriteLine(file.Name);
+                        if (File.Exists(MusicDir + "\\" + file.Name))
+                            continue;
+                        else
+                            Console.WriteLine(file.Name);
 
                         webClient.DownloadFile(new Uri(RMusicDir + file.Name), MusicDir + "\\" + file.Name);
                     }
@@ -394,25 +408,26 @@ namespace Test
 
         private static void CleanUp()
         {
+            if (!RemoveDuplicates)
+                return;
+
             try
             {
                 DirectoryInfo RMusicDir = new DirectoryInfo(RemoteMusicDir);
 
                 FileInfo[] MusicMass = RMusicDir.GetFiles("*.mp3");
 
+                Console.WriteLine("Произвожу поиск и удаление рекламы и дубликатов...");
+
                 foreach (FileInfo file in MusicMass)
                 {
-
-                    Console.WriteLine("Произвожу поиск и удаление рекламы...");
-
                     if (file.Length < 1200976)
                     {
-                        //Console.WriteLine(RMusicDir + file.Name);
-                        //File.Delete(RMusicDir + file.Name);
+                        Console.WriteLine(RMusicDir + file.Name);
+                        File.Delete(RMusicDir + file.Name);
+                        Console.WriteLine(file.Name + " удалён!");
                         Log.Write(RMusicDir + file.Name, "[DEL_AD]", "del_ad");
                     }
-
-                    Console.WriteLine("Произвожу поиск и удаление дубликатов алгоритм №1...");
 
                     if (file.Name.Contains(" (2).mp3") ||
                         file.Name.Contains(" (3).mp3") ||
@@ -424,35 +439,12 @@ namespace Test
                         file.Name.Contains(" (9).mp3") ||
                         file.Name.Contains(" (10).mp3")) {
 
-                        //File.Delete(RMusicDir + file.Name);
+                        File.Delete(RMusicDir + file.Name);
+                        Console.WriteLine(file.Name + " удалён!");
                         Log.Write(RMusicDir + file.Name, "[DEL_ALG1]", "del1");
+                        continue;
                     }
-
-                    Console.WriteLine("Произвожу поиск и удаление дубликатов алгоритм №2,3...");
-
-                    foreach (FileInfo files in MusicMass)
-                    {
-                        if (files.Length == file.Length && files.Name != file.Name)
-                        {
-                            Console.WriteLine(RMusicDir + files.Name);
-                            //File.Delete(RMusicDir + files.Name);
-                            Log.Write(RMusicDir + files.Name, "[DEL_ALG2]", "del2");
-                        }
-
-                        if (file.Name.Length != files.Name.Length && file.Name.Substring(0, file.Name.Length) == file.Name.Substring(0, file.Name.Length - 3))
-                        {
-                            Console.WriteLine(RMusicDir + files.Name);
-                            //File.Delete(RMusicDir + files.Name);
-                            Log.Write(RMusicDir + files.Name, "[DEL_ALG3]", "del3");
-                        }
-
-                    }
-
-                    Console.WriteLine("Очистка завершена...");
-
                 }
-
-
             }
             catch (System.Exception ex)
             {
