@@ -230,6 +230,9 @@ namespace Test
                         sw.WriteLine(MusicDir + "\\" + file.Name);
                         sw.WriteLine("#EXTINF:3618," + file.Name.Replace(".mp3", ""));
 
+                        if (AdMass.Length == 0)
+                            continue;
+
                         //AD change after song
                         if (new Random().Next(0, 500) + new Random().Next(0, 500) < 500)
                             continue;
