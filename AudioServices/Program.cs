@@ -424,10 +424,14 @@ namespace Test
 
                 foreach (FileInfo file in MusicMass)
                 {
+                    if (file.Length == 0)
+                        continue;
+
                     if (file.Length < 1200976)
                     {
                         Console.WriteLine(RMusicDir + file.Name);
                         File.Delete(RMusicDir + file.Name);
+
                         Console.WriteLine(file.Name + " удалён!");
                         Log.Write(RMusicDir + file.Name, "[DEL_AD]", "del_ad");
                     }
