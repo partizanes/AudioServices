@@ -389,6 +389,12 @@ namespace Test
         {
             try
             {
+                if (AdDir.Exists)
+                    Directory.Delete(AdDir.FullName, true);
+
+                if (!AdDir.Exists)
+                    Directory.CreateDirectory(AdDir.FullName);
+
                 DirectoryInfo remADdir = new DirectoryInfo(RemoteAdDir);
 
                 FileInfo[] AdMass = remADdir.GetFiles("*.mp3");
